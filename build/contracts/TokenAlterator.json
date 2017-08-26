@@ -109,6 +109,19 @@
       "constant": false,
       "inputs": [
         {
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "bypassLockUntill",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
           "name": "_newAddress",
           "type": "address"
         }
@@ -200,7 +213,7 @@
       "constant": false,
       "inputs": [
         {
-          "name": "_tokenAddres",
+          "name": "_tokenAddress",
           "type": "address"
         },
         {
@@ -476,5 +489,5 @@
   "unlinked_binary": "0x",
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1503569509293
+  "updated_at": 1503736104713
 }

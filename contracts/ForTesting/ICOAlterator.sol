@@ -1,7 +1,7 @@
 pragma solidity ^0.4.13;
 
-import "../MusiconomiICO.sol";
+import "../MusiconomiCrowdsale.sol";
 
-contract ICOAlterator is MusiconomiICO{
+contract ICOAlterator is MusiconomiCrowdsale{
 
 }

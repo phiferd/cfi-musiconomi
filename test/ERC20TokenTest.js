@@ -1,20 +1,20 @@
-var Ico = artifacts.require("./MusiconomiICO.sol");
+var Crowdsale = artifacts.require("./MusiconomiCrowdsale.sol");
 var Token = artifacts.require("./MusicToken.sol");
 
 contract('ERC20TokenTest', function(){
 
 	it('Test init values', function(){
 		var tokenContract;
-		var icoContract;
+		var crowdsaleContract;
 		var expectedOwner = web3.eth.accounts[0];
 		var expectedLock = 100;
 
 		return Token.deployed().then(function(_tokenInstance) {
 			tokenContract = _tokenInstance;
-		return Ico.deployed().then(function(_icoInstance) {
-			icoContract = _icoInstance;
-		return tokenContract.icoContractAddress.call().then(function(_icoAddy) {
-			assert.equal(_icoAddy, icoContract.address, "ICO address was not set properly!");
+		return Crowdsale.deployed().then(function(_crowdsaleInstance) {
+			crowdsaleContract = _crowdsaleInstance;
+		return tokenContract.crowdsaleContractAddress.call().then(function(_crowdsaleAddy) {
+			assert.equal(_crowdsaleAddy, crowdsaleContract.address, "Crowdsale address was not set properly!");
 
 		});
 		});
@@ -23,7 +23,7 @@ contract('ERC20TokenTest', function(){
 
 	it('Test mintTokens', function(){
 		var tokenContract;
-		var icoContract;
+		var crowdsaleContract;
 		var ownerMinter = web3.eth.accounts[0];
 		var mintingSource = web3.eth.accounts[2]
 		var notOwner = web3.eth.accounts[1];
@@ -34,7 +34,7 @@ contract('ERC20TokenTest', function(){
 
 		return Token.deployed().then(function(_tokenInstance) {
 			tokenContract = _tokenInstance;
-		return tokenContract.bypassSetIcoAddress(ownerMinter).then(function() {
+		return tokenContract.bypassSetCrowdsaleAddress(ownerMinter).then(function() {
 		return tokenContract.balanceOf(mintingSource).then(function(_startingBalance){
 			startingBalance = _startingBalance.toNumber();
 		return tokenContract.totalSupply.call().then(function(_startingTotalSupply){
@@ -48,11 +48,11 @@ contract('ERC20TokenTest', function(){
 			assert(false, "It should have thrown when user withouth permisions tries to mint tokens!")
 		}).catch(function(_error) {
 			if (_error.toString().indexOf("invalid opcode") == -1){ assert(false, _error.toString()); }
-		return Ico.deployed().then(function(_icoInstance) {
-			icoContract = _icoInstance;
-		return tokenContract.bypassSetIcoAddress(icoContract.address).then(function() {
-		return tokenContract.icoContractAddress.call().then(function(_icoAddy) {
-			assert.equal(_icoAddy, icoContract.address, "Target balance is not what expected!");
+		return Crowdsale.deployed().then(function(_crowdsaleInstance) {
+			crowdsaleContract = _crowdsaleInstance;
+		return tokenContract.bypassSetCrowdsaleAddress(crowdsaleContract.address).then(function() {
+		return tokenContract.crowdsaleContractAddress.call().then(function(_crowdsaleAddy) {
+			assert.equal(_crowdsaleAddy, crowdsaleContract.address, "Target balance is not what expected!");
 		return tokenContract.bypassBurn(mintingSource, mintValue).then(function() {
 		return tokenContract.balanceOf(mintingSource).then(function(_endBalance){
 			assert.equal(0, _endBalance.toNumber(), "Did not clean after the deed :(!");

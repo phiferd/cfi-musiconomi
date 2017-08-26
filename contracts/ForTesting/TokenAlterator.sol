@@ -2,7 +2,7 @@ pragma solidity ^0.4.13;
 
 import "../MusicToken.sol";
 
-contract TokenAlterator is MusicToken{
+contract TokenAlterator is MusiconomiToken{
 /*
   function bypassMint(address _to, uint _amount){
     supply = supply.add(_amount);

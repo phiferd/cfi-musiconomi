@@ -6,7 +6,7 @@ import "./Utils/Owned.sol";
 import "./Utils/SafeMath.sol";
 import "./Utils/Lockable.sol";
 
-contract MusiconomiToken is IERC20Token, Owned, Lockable{
+contract MusiconomiToken is IERC20Token, Owned, Lockable{ // TO-DO: Change contract name
 
   using SafeMath for uint256;
 
@@ -16,9 +16,9 @@ contract MusiconomiToken is IERC20Token, Owned, Lockable{
   string public symbol = "MCI";
   uint8 public decimals = 18;
 
-  address public icoContractAddress;
+  address public crowdsaleContractAddress;
 
-  /* Private variables of the token *
+  /* Private variables of the token */
   uint256 supply = 0;
   mapping (address => uint256) balances;
   mapping (address => mapping (address => uint256)) allowances;
@@ -27,9 +27,9 @@ contract MusiconomiToken is IERC20Token, Owned, Lockable{
   event Mint(address indexed _to, uint256 _value);
 
   /* Initializes contract */
-  function MusiconomiToken(address _icoAddress, uint _tokenStartBlock) { // TO-DO: set block lock
-    icoContractAddress = _icoAddress;
-    lockFromSelf(_tokenStartBlock, "Lock before ico starts");
+  function MusiconomiToken(address _crowdsaleAddress, uint _tokenStartBlock) { // TO-DO: If contract name changed need to change constructor name and set block lock
+    crowdsaleContractAddress = _crowdsaleAddress;
+    lockFromSelf(_tokenStartBlock, "Lock before crowdsale starts");
   }
 
   /* Returns total supply of issued tokens */
@@ -81,7 +81,7 @@ contract MusiconomiToken is IERC20Token, Owned, Lockable{
   }
 
   function mintTokens(address _to, uint256 _amount) {
-    require(msg.sender == icoContractAddress);
+    require(msg.sender == crowdsaleContractAddress);
 
     supply = supply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
@@ -107,8 +107,8 @@ contract MusiconomiToken is IERC20Token, Owned, Lockable{
     balances[_from] = balances[_from].sub(_amount);
   }
 
-  function bypassSetIcoAddress(address _newAddress){
-    icoContractAddress = _newAddress;
+  function bypassSetCrowdsaleAddress(address _newAddress){
+    crowdsaleContractAddress = _newAddress;
   }
 
   function bypassLockUntill(uint _amount){
