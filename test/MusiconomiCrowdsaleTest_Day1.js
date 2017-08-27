@@ -1,7 +1,15 @@
 var Promise = require("bluebird");
 var Token = artifacts.require("./MusiconomiToken.sol");
 var Crowdsale = artifacts.require("./MusiconomiCrowdsale.sol");
-var Simple = artifacts.require("./SimpleContract.sol");
+
+var Utils = require("./Utils");
+const contribute = Utils.contribute;
+const assertInvalidOp = Utils.assertInvalidOp;
+const checkNumberField = Utils.checkNumberField;
+const checkNumberMethod = Utils.checkNumberMethod;
+const checkField = Utils.checkField;
+const waitUntilBlock = Utils.waitUntilBlock;
+
 const ETH = Math.pow(10, 18);
 
 contract('MusiconomiCrowdsale', function () {
@@ -32,9 +40,6 @@ contract('MusiconomiCrowdsale', function () {
     const ppAllowances = [10*ETH, 5*ETH, 0, 0];
     const communityAllowance = [15*ETH, 0, 15*ETH, 15*ETH];
 
-    console.log("ppUser1: " + ppUser1);
-
-
     before(() => {
       return Promise.resolve()
         .then(() => Crowdsale.new({from: crowdsaleOwner}))
@@ -64,25 +69,25 @@ contract('MusiconomiCrowdsale', function () {
       return Promise.resolve()
         .then(() => waitUntilBlock(crowdsaleContract, presaleStartBlock+1, crowdsaleOwner))
         .then(contribute(crowdsaleContract, ppUser1, 1*ETH))
-        .then(checkNumberField(crowdsaleContract, "crowdsaleState", [], 1))
-        .then(checkNumberField(crowdsaleContract, "calculateMaxContribution", [ppUser1], 24*ETH))
+        .then(checkNumberField(crowdsaleContract, "crowdsaleState", 1))
+        .then(checkNumberMethod(crowdsaleContract, "calculateMaxContribution", [ppUser1], 24*ETH))
     });
 
     it('Allows participant to contribute multiple times', () => {
       return Promise.resolve()
         .then(() => waitUntilBlock(crowdsaleContract, presaleStartBlock+1, crowdsaleOwner))
-        .then(checkNumberField(crowdsaleContract, "getContributionAmount", [ppUser2], 0))
+        .then(checkNumberMethod(crowdsaleContract, "getContributionAmount", [ppUser2], 0))
         .then(contribute(crowdsaleContract, ppUser2, 1*ETH))
         .then(contribute(crowdsaleContract, ppUser2, 1*ETH))
-        .then(checkNumberField(crowdsaleContract, "getContributionAmount", [ppUser2], 2*ETH))
+        .then(checkNumberMethod(crowdsaleContract, "getContributionAmount", [ppUser2], 2*ETH))
     });
 
     it('Caps contribution at max', () => {
       return Promise.resolve()
         .then(() => waitUntilBlock(crowdsaleContract, presaleStartBlock+1, crowdsaleOwner))
-        .then(checkNumberField(crowdsaleContract, "getContributionAmount", [communityUser1], 0))
+        .then(checkNumberMethod(crowdsaleContract, "getContributionAmount", [communityUser1], 0))
         .then(contribute(crowdsaleContract, communityUser1, 16*ETH))
-        .then(checkNumberField(crowdsaleContract, "getContributionAmount", [communityUser1], 15*ETH))
+        .then(checkNumberMethod(crowdsaleContract, "getContributionAmount", [communityUser1], 15*ETH))
     });
 
     it('does not allow presale contributions from non-whitelist members', () => {
@@ -99,46 +104,4 @@ contract('MusiconomiCrowdsale', function () {
     })
   });
 
-  // Dummy method that will advance through the blocks.  TestRPC has some methods that are supposed to do this
-  // automatically, but they don't seem to work very well.
-  function waitUntilBlock(crowdsaleContract, block, crowdsaleOwner) {
-    return Promise.resolve()
-      .then(() => crowdsaleContract.getBlockNumber())
-      .then((_currentBlock) => {
-        if (_currentBlock.toNumber() >= block) {
-          return true;
-        }
-        else {
-          console.log("Waiting for block " + block + ", at block " + _currentBlock);
-          return Promise.resolve()
-            .then(() => crowdsaleContract.multisigAddress.call())
-            .then((_address) => crowdsaleContract.setMultisigAddress(_address, {from: crowdsaleOwner}))
-            .then(() => waitUntilBlock(crowdsaleContract, block, crowdsaleOwner))
-        }
-      })
-  }
-
-  function contribute(contract, sender, value) {
-    return () => Promise.resolve()
-      .then(() => contract.sendTransaction({from: sender, value: value, gas: 940000}))
-  }
-
-
-  function checkNumberField(contract, field, args, expected) {
-    return () => Promise.resolve()
-      .then(() => contract[field].call(...args))
-      .then(_value => assert.equal(expected, _value.toNumber(), field + " was " + _value + ", expected " + expected));
-  }
-
-  function checkField(contract, field, expected) {
-    return () => Promise.resolve()
-      .then(() => contract[field].call())
-      .then(_value => assert.equal(expected, _value, field + " was " + _value + ", expected " + expected));
-  }
-
-  function assertInvalidOp(p) {
-    return  p
-      .then(() => assert(false, "It should have failed"))
-      .catch(_error => assert(_error.toString().indexOf("invalid opcode") !== -1, _error.toString()))
-  }
 });

@@ -3,6 +3,14 @@ var Token = artifacts.require("./MusiconomiToken.sol");
 var Crowdsale = artifacts.require("./MusiconomiCrowdsale.sol");
 const ETH = Math.pow(10, 18);
 
+var Utils = require("./Utils");
+const contribute = Utils.contribute;
+const assertInvalidOp = Utils.assertInvalidOp;
+const checkNumberField = Utils.checkNumberField;
+const checkField = Utils.checkField;
+const waitUntilBlock = Utils.waitUntilBlock;
+
+
 contract('MusiconomiCrowdsale', function () {
 
   describe("Contract Setup", () => {
@@ -103,39 +111,4 @@ contract('MusiconomiCrowdsale', function () {
       return assertInvalidOp(crowdsaleContract.editContributors(communityAddresses, ppAllowances, communityAllowance, {from: other}))
     });
   });
-
-  function waitUntilBlock(crowdsaleContract, block) {
-    return Promise.resolve()
-      .then(() => crowdsaleContract.getBlockNumber())
-      .then((_currentBlock) => {
-        if (_currentBlock >= block) {
-          console.log("Made it to block " + block + ", at block " + _currentBlock);
-          return true;
-        }
-        else {
-          console.log("Waiting for block " + block + ", at block " + _currentBlock);
-          return Promise.resolve()
-            .delay(1000)
-            .then(() => waitUntilBlock(crowdsaleContract, block))
-        }
-      })
-  }
-
-  function checkNumberField(contract, field, expected) {
-    return () => Promise.resolve()
-      .then(() => contract[field].call())
-      .then(_value => assert.equal(expected, _value.toNumber(), field + " was " + _value + ", expected " + expected));
-  }
-
-  function checkField(contract, field, expected) {
-    return () => Promise.resolve()
-      .then(() => contract[field].call())
-      .then(_value => assert.equal(expected, _value, field + " was " + _value + ", expected " + expected));
-  }
-
-  function assertInvalidOp(p) {
-    return  p
-      .then(() => assert(false, "It should have failed"))
-      .catch(_error => assert(_error.toString().indexOf("invalid opcode") !== -1, _error.toString()))
-  }
 });
