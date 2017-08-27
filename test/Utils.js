@@ -1,4 +1,10 @@
 module.exports = {
+  printBalance: function(text, address) {
+    return () => Promise.resolve()
+      .then(() => web3.eth.getBalance(address))
+      .then(a => console.log(text + ": " + a));
+  },
+
   contribute: function (contract, sender, value) {
     return () => Promise.resolve()
       .then(() => contract.sendTransaction({from: sender, value: value, gas: 940000}))

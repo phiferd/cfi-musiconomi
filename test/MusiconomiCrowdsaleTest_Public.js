@@ -14,7 +14,7 @@ const ETH = Math.pow(10, 18);
 
 contract('MusiconomiCrowdsale', function () {
 
-  describe("Day 3: Public sale", () => {
+  describe("Day 3: Public sale, hit hard cap", () => {
     let crowdsaleContract;
     let tokenContract;
 
@@ -69,17 +69,17 @@ contract('MusiconomiCrowdsale', function () {
         .then(checkNumberField(crowdsaleContract, "crowdsaleState", 3))
     });
 
+    it('Caps contributions based on hard cap', () => {
+      return Promise.resolve()
+        .then(checkNumberMethod(crowdsaleContract, "calculateMaxContribution", [ppUser1], maxCap - 1 * ETH))
+    });
+
     it('allows contributions from non-whitelist members', () => {
       return Promise.resolve()
         .then(() => waitUntilBlock(crowdsaleContract, crowdsaleStartBlock+1, crowdsaleOwner))
         .then(checkNumberMethod(crowdsaleContract, "getContributionAmount", [publicUser1], 0))
-        .then(contribute(crowdsaleOwner, publicUser1, 1*ETH))
+        .then(contribute(crowdsaleContract, publicUser1, 1*ETH))
         .then(checkNumberMethod(crowdsaleContract, "getContributionAmount", [publicUser1], 1*ETH))
-    });
-
-    it('Caps contributions based on hard cap', () => {
-      return Promise.resolve()
-        .then(checkNumberMethod(crowdsaleContract, "calculateMaxContribution", [ppUser1], maxCap - 1 * ETH))
     });
   });
 });
