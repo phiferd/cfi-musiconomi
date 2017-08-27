@@ -49,6 +49,7 @@ contract('MusiconomiCrowdsale', function () {
         .then(() => crowdsaleContract.setToken(tokenContract.address, {from: crowdsaleOwner}))
         .then(() => crowdsaleContract.editContributors(communityAddresses, ppAllowances, communityAllowance, {from: crowdsaleOwner}))
         .then(() => crowdsaleContract.setMinAndMaxCap(10000*ETH, 20000*ETH, {from: crowdsaleOwner}))
+        .then(() => crowdsaleContract.setMultisigAddress(multiSig, {from: crowdsaleOwner}))
         .then(() => crowdsaleContract.getBlockNumber())
         .then((_firstBlock) => {
           firstBlock = _firstBlock.toNumber();

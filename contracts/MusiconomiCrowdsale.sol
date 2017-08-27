@@ -40,7 +40,7 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
 
   uint public minCap;  // TO-DO: Set min CAP
   uint public maxCap;  // TO-DO: Set max CAP
-  uint ethRaised;
+  uint public ethRaised;
 
   address public multisigAddress;
 
@@ -352,5 +352,9 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
 
   function isActive(address _contributor) constant returns(bool) {
     return contributorList[_contributor].isActive;
+  }
+
+  function isMinReached() constant returns(bool) {
+    return ethRaised >= minCap;
   }
 }

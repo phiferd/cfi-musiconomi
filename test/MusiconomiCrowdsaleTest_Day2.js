@@ -50,6 +50,7 @@ contract('MusiconomiCrowdsale', function () {
         .then(() => crowdsaleContract.setToken(tokenContract.address, {from: crowdsaleOwner}))
         .then(() => crowdsaleContract.editContributors(communityAddresses, ppAllowances, communityAllowance, {from: crowdsaleOwner}))
         .then(() => crowdsaleContract.setMinAndMaxCap(minCap, maxCap, {from: crowdsaleOwner}))
+        .then(() => crowdsaleContract.setMultisigAddress(multiSig, {from: crowdsaleOwner}))
         .then(() => crowdsaleContract.getBlockNumber())
         .then((_firstBlock) => {
           firstBlock = _firstBlock.toNumber();
@@ -71,7 +72,7 @@ contract('MusiconomiCrowdsale', function () {
     it('does not allow presale contributions from non-whitelist members', () => {
       return Promise.resolve()
         .then(() => waitUntilBlock(crowdsaleContract, presaleUnlimitedStartBlock+1, crowdsaleOwner))
-        .then(() => assertInvalidOp(crowdsaleContract.send(web3.toWei(1, "ether"), {from: publicUser1})))
+        .then(() => assertInvalidOp(crowdsaleContract.send(1*ETH, {from: publicUser1})))
     });
 
     it('Caps contributions based on hard cap', () => {
@@ -79,11 +80,42 @@ contract('MusiconomiCrowdsale', function () {
         .then(checkNumberMethod(crowdsaleContract, "calculateMaxContribution", [ppUser1], maxCap - 1 * ETH))
     });
 
-    it('Ends after hitting the hard cap', () => {
+    it('Does NOT Allow withdrawal of funds BEFORE hitting soft cap', () => {
+      return Promise.resolve()
+        .then(assertInvalidOp(crowdsaleContract.withdrawEth()));
+    });
+
+    it('Recognizes soft cap is hit', () => {
       return Promise.resolve()
         .then(contribute(crowdsaleContract, ppUser1, 10 * ETH))
+        .then(checkField(crowdsaleContract, "isMinReached", true))
+    });
+
+    it('Does NOT allows withdrawal of funds AFTER hitting soft cap by non-owner', () => {
+      return Promise.resolve()
+        .then(assertInvalidOp(crowdsaleContract.withdrawEth({from: other})))
+    });
+
+    it('Allows withdrawal of funds AFTER hitting soft cap', () => {
+      let multiSigBalanceBefore;
+      let contractTotal;
+      return Promise.resolve()
+        .then(() => web3.eth.getBalance(multiSig))
+        .then(_bal => multiSigBalanceBefore = _bal.toNumber())
+        .then(() => web3.eth.getBalance(crowdsaleContract.address))
+        .then(_bal => contractTotal = _bal.toNumber())
+        .then(() => crowdsaleContract.withdrawEth({from: crowdsaleOwner}))
+        .then(() => web3.eth.getBalance(crowdsaleContract.address))
+        .then((_bal) => assert.equal(0, _bal.toNumber()))
+        .then(() => web3.eth.getBalance(multiSig))
+        .then((_bal) => assert.equal(multiSigBalanceBefore + contractTotal, _bal.toNumber()));
+    });
+
+    it('Ends after hitting the hard cap', () => {
+      return Promise.resolve()
         .then(contribute(crowdsaleContract, ppUser2, 10 * ETH))
         .then(contribute(crowdsaleContract, ppUser2, 1 * ETH)) // forcing it to end since maxCap check happens first rather than last
+        .then(() => crowdsaleContract.ethRaised.call())
         .then(checkNumberField(crowdsaleContract, "crowdsaleState", 4))
     });
   });
