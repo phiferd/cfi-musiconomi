@@ -13,6 +13,16 @@ contract('MusiconomiCrowdsale', function () {
     let crowdsaleOwner = web3.eth.accounts[1];
     let multiSig = web3.eth.accounts[2];
     let other = web3.eth.accounts[3];
+    let ppUser1 = web3.eth.accounts[4];
+    let ppUser2 = web3.eth.accounts[5];
+    let communityUser1 = web3.eth.accounts[6];
+    let communityUser2 = web3.eth.accounts[7];
+    let publicUser1 = web3.eth.accounts[8];
+    let publicUser2 = web3.eth.accounts[9];
+
+    const communityAddresses = [ppUser1, ppUser2, communityUser1, communityUser2];
+    const ppAllowances =       [10*ETH, 5*ETH, 0,      0];
+    const communityAllowance = [15*ETH, 0,     15*ETH, 15*ETH];
 
     before(() => {
       return Promise.resolve()
@@ -22,7 +32,7 @@ contract('MusiconomiCrowdsale', function () {
         .then(_tokenInstance => tokenContract = _tokenInstance)
         .then(() => crowdsaleContract.setToken(tokenContract.address, {from: crowdsaleOwner}))
         .then(() => crowdsaleContract.getBlockNumber())
-        .then((_firstBlock) => firstBlock = _firstBlock)
+        .then((_firstBlock) => firstBlock = _firstBlock.toNumber())
     });
 
     it('references the token contract', () => {
@@ -51,6 +61,26 @@ contract('MusiconomiCrowdsale', function () {
         .then(checkNumberField(crowdsaleContract, "crowdsaleEndedBlock", firstBlock+103))
     });
 
+    it('allows pp/community to be configured', () => {
+      return Promise.resolve()
+        .then(() => crowdsaleContract.editContributors(communityAddresses, ppAllowances, communityAllowance, {from: crowdsaleOwner}))
+        .then(checkNumberField(crowdsaleContract, "nextContributorIndex", 4))
+        .then(() => crowdsaleContract.getConfiguredMaxContribution(ppUser1))
+        .then((_max) => assert.equal(25*ETH, _max.toNumber(), "Max contribution is not correct"))
+
+        .then(() => crowdsaleContract.getConfiguredMaxContribution(ppUser2))
+        .then((_max) => assert.equal(5*ETH, _max.toNumber(), "Max contribution is not correct"))
+
+        .then(() => crowdsaleContract.getConfiguredMaxContribution(communityUser1))
+        .then((_max) => assert.equal(15*ETH, _max.toNumber(), "Max contribution is not correct"))
+
+        .then(() => crowdsaleContract.getConfiguredMaxContribution(communityUser2))
+        .then((_max) => assert.equal(15*ETH, _max.toNumber(), "Max contribution is not correct"))
+
+        .then(() => crowdsaleContract.getConfiguredMaxContribution(publicUser1))
+        .then((_max) => assert.equal(0, _max.toNumber(), "Max contribution is not correct"))
+    });
+
     it('sets the multisig address', () => {
       return Promise.resolve()
         .then(() => crowdsaleContract.setMultisigAddress(multiSig, {from: crowdsaleOwner}))
@@ -68,44 +98,28 @@ contract('MusiconomiCrowdsale', function () {
     it('DOES NOT allow non-owner to set the block times', () => {
       return assertInvalidOp(crowdsaleContract.setBlockTimes(firstBlock+100, firstBlock+101, firstBlock+102, firstBlock+103, {from: other}))
     });
-  });
 
-  describe("Day 1 of Pre-sale", () => {
-    let crowdsaleContract;
-    let tokenContract;
-
-
-    let firstBlock;
-    let presaleStartBlock;
-    let presaleUnlimitedStartBlock;
-    let crowdsaleStartBlock;
-    let crowdsaleEndedBlock;
-
-
-    let ownerMinter = web3.eth.accounts[0];
-    let crowdsaleOwner = web3.eth.accounts[1];
-    let multiSig = web3.eth.accounts[2];
-    let other = web3.eth.accounts[3];
-
-    before(() => {
-      return Promise.resolve()
-        .then(() => Crowdsale.new({from: crowdsaleOwner}))
-        .then(_crowdsaleInstance => crowdsaleContract = _crowdsaleInstance)
-        .then(() => Token.new(crowdsaleContract.address, 0))
-        .then(_tokenInstance => tokenContract = _tokenInstance)
-        .then(() => crowdsaleContract.setToken(tokenContract.address, {from: crowdsaleOwner}))
-        .then(() => crowdsaleContract.getBlockNumber())
-        .then((_firstBlock) => {
-          firstBlock = _firstBlock;
-          presaleStartBlock = _firstBlock + 10;
-          presaleUnlimitedStartBlock = _firstBlock + 1000000;
-          crowdsaleStartBlock = _firstBlock + 2000000;
-          crowdsaleEndedBlock = _firstBlock + 3000000;
-        })
-        .then(() => crowdsaleContract.setMinAndMaxCap(100, 200, {from: crowdsaleOwner}))
-        .then(() => crowdsaleContract.setBlockTimes(firstBlock+100, firstBlock+101, firstBlock+102, firstBlock+103, {from: crowdsaleOwner}))
+    it('DOES NOT allow non-owner to set the community list', () => {
+      return assertInvalidOp(crowdsaleContract.editContributors(communityAddresses, ppAllowances, communityAllowance, {from: other}))
     });
   });
+
+  function waitUntilBlock(crowdsaleContract, block) {
+    return Promise.resolve()
+      .then(() => crowdsaleContract.getBlockNumber())
+      .then((_currentBlock) => {
+        if (_currentBlock >= block) {
+          console.log("Made it to block " + block + ", at block " + _currentBlock);
+          return true;
+        }
+        else {
+          console.log("Waiting for block " + block + ", at block " + _currentBlock);
+          return Promise.resolve()
+            .delay(1000)
+            .then(() => waitUntilBlock(crowdsaleContract, block))
+        }
+      })
+  }
 
   function checkNumberField(contract, field, expected) {
     return () => Promise.resolve()

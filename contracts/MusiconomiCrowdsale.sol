@@ -16,7 +16,7 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   }
 
   mapping(address => ContributorData) contributorList;
-  uint nextContributorIndex;
+  uint public nextContributorIndex;
   mapping(uint => address) contributorIndexes;
 
   state public crowdsaleState = state.pendingStart;
@@ -33,6 +33,7 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   event CrowdsaleEnded(uint blockNumber);
   event ErrorSendingETH(address to, uint amount);
   event MinCapReached(uint blockNumber);
+  event SentETHBack(address sender);
 
   IToken public token = IToken(0x0);
   uint ethToMusicConversion = 10; // TO-DO: Set conversion eth to music
@@ -129,6 +130,7 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   //
   function refundTransaction(bool _stateChanged) internal{
     if (_stateChanged){
+      SentETHBack(msg.sender);
       msg.sender.transfer(msg.value);
     }else{
       revert();
@@ -338,5 +340,17 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   function getBlockNumber() constant returns(uint256) {
     // Not sure how to do this in the test...
     return block.number;
+  }
+
+  function getConfiguredMaxContribution(address _contributor) constant returns(uint256) {
+    return contributorList[_contributor].priorityPassAllowance + contributorList[_contributor].communityAllowance;
+  }
+
+  function getContributionAmount(address _contributor) constant returns(uint256) {
+    return contributorList[_contributor].contributionAmount;
+  }
+
+  function isActive(address _contributor) constant returns(bool) {
+    return contributorList[_contributor].isActive;
   }
 }
