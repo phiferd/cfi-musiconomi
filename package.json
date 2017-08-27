@@ -1,0 +1,27 @@
+{
+  "name": "cfi-musiconomi-dan",
+  "version": "1.0.0",
+  "description": "CFI - Musiconomi Smart Contract",
+  "main": "truffle.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phiferd/cfi-musiconomi.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/phiferd/cfi-musiconomi/issues"
+  },
+  "homepage": "https://github.com/phiferd/cfi-musiconomi#readme",
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
+    "bluebird": "^3.5.0"
+  }
+}

@@ -1,5 +1,6 @@
 var Crowdsale = artifacts.require("./MusiconomiCrowdsale.sol");
-var Token = artifacts.require("./MusicToken.sol");
+var Token = artifacts.require("./MusiconomiToken.sol");
+const ETH = Math.pow(10, 18);
 
 contract('ERC20TokenTest', function(){
 
@@ -27,7 +28,7 @@ contract('ERC20TokenTest', function(){
 		var ownerMinter = web3.eth.accounts[0];
 		var mintingSource = web3.eth.accounts[2]
 		var notOwner = web3.eth.accounts[1];
-		var mintValue = 100 * 10**18;
+		var mintValue = 100 * ETH;
 
 		var startingBalance;
 		var startingTotalSupply;
@@ -80,7 +81,7 @@ contract('ERC20TokenTest', function(){
 		var owner = web3.eth.accounts[0];
 		var senderAccount = web3.eth.accounts[2];
 		var recieverAccount = web3.eth.accounts[1];
-		var transferValue = 50 * 10**18;
+		var transferValue = 50 * ETH;
 		var fromStartBalance;
 		var toStartBalance;
 		var fromEndBalance;
@@ -88,10 +89,10 @@ contract('ERC20TokenTest', function(){
 
 		return Token.deployed().then(function(_tokenInstance) {
 			tokenContract = _tokenInstance;
-		return tokenContract.bypassMint(senderAccount, 100 * 10**18, {from:owner}).then(function(){
+		return tokenContract.bypassMint(senderAccount, 100 * ETH, {from:owner}).then(function(){
 		return tokenContract.bypassLockUntill(0).then(function(){
 		return tokenContract.balanceOf(senderAccount).then(function(_fromStartBalance){
-			assert.equal(_fromStartBalance.toNumber(), 100 * 10**18, "There is not enough tokens to start the test!");
+			assert.equal(_fromStartBalance.toNumber(), 100 * ETH, "There is not enough tokens to start the test!");
 			fromStartBalance = _fromStartBalance.toNumber();
 		return tokenContract.balanceOf(recieverAccount).then(function(_toStartBalance){
 			toStartBalance = _toStartBalance.toNumber();
@@ -114,8 +115,8 @@ contract('ERC20TokenTest', function(){
 			if (_error.toString().indexOf("invalid opcode") == -1){ assert(false, _error.toString()); }
 		return tokenContract.transfer(senderAccount, transferValue, {from:recieverAccount}).then(function(){
 		return tokenContract.balanceOf(senderAccount).then(function(_fromStartBalance){
-			assert.equal(_fromStartBalance.toNumber(), 100 * 10**18, "End state is not the same as start state");
-		return tokenContract.bypassBurn(senderAccount, 100 * 10**18).then(function() {
+			assert.equal(_fromStartBalance.toNumber(), 100 * ETH, "End state is not the same as start state");
+		return tokenContract.bypassBurn(senderAccount, 100 * ETH).then(function() {
 		return tokenContract.balanceOf(senderAccount).then(function(_endBalance){
 			assert.equal(0, _endBalance.toNumber(), "Did not clean after the deed :(!");
 		return tokenContract.totalSupply.call().then(function(_endTotalSupply){
@@ -157,10 +158,10 @@ contract('ERC20TokenTest', function(){
 
 		return Token.deployed().then(function(_tokenInstance) {
 			tokenContract = _tokenInstance;
-		return tokenContract.bypassMint(fromAddy, 100 * 10**18, {from:owner}).then(function(){
+		return tokenContract.bypassMint(fromAddy, 100 * ETH, {from:owner}).then(function(){
 		return tokenContract.bypassLockUntill(0).then(function(){
 		return tokenContract.balanceOf(fromAddy).then(function(_fromStartBalance){
-			assert.equal(_fromStartBalance.toNumber(), 100 * 10**18, "There is not enough tokens to start the test!");
+			assert.equal(_fromStartBalance.toNumber(), 100 * ETH, "There is not enough tokens to start the test!");
 			fromStartBalance = _fromStartBalance.toNumber();
 		return tokenContract.balanceOf(toAddy).then(function(_toStartBalance){
 			toStartBalance = _toStartBalance.toNumber()
@@ -182,15 +183,15 @@ contract('ERC20TokenTest', function(){
 			assert(false, "It should have thrown when sending to token contract address!")
 		}).catch(function(_error) {
 			if (_error.toString().indexOf("invalid opcode") == -1){ assert(false, _error.toString()); }
-		return tokenContract.approve(owner, 200 * 10**18, {from:fromAddy}).then(function(){
-		return tokenContract.transferFrom(fromAddy, toAddy, 200 * 10**18, {from:owner}).then(function(){
+		return tokenContract.approve(owner, 200 * ETH, {from:fromAddy}).then(function(){
+		return tokenContract.transferFrom(fromAddy, toAddy, 200 * ETH, {from:owner}).then(function(){
 			assert(false, "It should have thrown when we want to transferFrom more than you have!")
 		}).catch(function(_error) {
 			if (_error.toString().indexOf("invalid opcode") == -1){ assert(false, _error.toString()); }
 		return tokenContract.transfer(fromAddy, transferValue, {from:toAddy}).then(function(){
 		return tokenContract.balanceOf(fromAddy).then(function(_fromStartBalance){
-			assert.equal(_fromStartBalance.toNumber(), 100 * 10**18, "End state is not the same as start state");
-		return tokenContract.bypassBurn(fromAddy, 100 * 10**18).then(function() {
+			assert.equal(_fromStartBalance.toNumber(), 100 * ETH, "End state is not the same as start state");
+		return tokenContract.bypassBurn(fromAddy, 100 * ETH).then(function() {
 		return tokenContract.balanceOf(fromAddy).then(function(_endBalance){
 			assert.equal(0, _endBalance.toNumber(), "Did not clean after the deed :(!");
 		return tokenContract.totalSupply.call().then(function(_endTotalSupply){

@@ -1,5 +1,5 @@
 var Crowdsale = artifacts.require("./MusiconomiCrowdsale.sol");             //For production use this .sol
-var Token = artifacts.require("./MusicToken.sol");         //For production use this .sol
+var Token = artifacts.require("./MusiconomiToken.sol");         //For production use this .sol
 var SafeMathLib = artifacts.require("./Utils/SafeMath.sol");
 
 module.exports = function(deployer) {

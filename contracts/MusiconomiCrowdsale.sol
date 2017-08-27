@@ -19,7 +19,7 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   uint nextContributorIndex;
   mapping(uint => address) contributorIndexes;
 
-  state crowdsaleState = state.pendingStart;
+  state public crowdsaleState = state.pendingStart;
   enum state { pendingStart, priorityPass, openedPriorityPass, crowdsale, crowdsaleEnded }
 
   uint public presaleStartBlock; // TO-DO: Set block
@@ -34,14 +34,14 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   event ErrorSendingETH(address to, uint amount);
   event MinCapReached(uint blockNumber);
 
-  IToken token = IToken(0x0);
+  IToken public token = IToken(0x0);
   uint ethToMusicConversion = 10; // TO-DO: Set conversion eth to music
 
-  uint minCap;  // TO-DO: Set min CAP
-  uint maxCap;  // TO-DO: Set max CAP
+  uint public minCap;  // TO-DO: Set min CAP
+  uint public maxCap;  // TO-DO: Set max CAP
   uint ethRaised;
 
-  address multisigAddress;
+  address public multisigAddress;
 
   uint nextContributorToClaim;
   mapping(address => bool) hasClaimedEthWhenFail;
@@ -51,6 +51,11 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   uint cofounditReward; // TO-DO: Set COF reward
   address cofounditAddress; // TO-DO: Set cof address
   bool cofounditHasClaimedTokens;
+
+  modifier requires(bool condition) {
+    require(condition);
+    _;
+  }
 
   //
   // Unnamed function that runs when eth is sent to the contract
@@ -268,8 +273,41 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   //
   // Owner can set token address where mints will happen
   //
-  function setToken(address _newAddress) onlyOwner{
+  function setToken(address _newAddress)
+    onlyOwner
+    requires(crowdsaleState == state.pendingStart)
+  {
     token = IToken(_newAddress);
+  }
+
+  function setMinAndMaxCap(uint256 _minWei, uint256 _maxWei)
+    onlyOwner
+    requires(crowdsaleState == state.pendingStart)
+    requires(_minWei < _maxWei)
+  {
+    minCap = _minWei;
+    maxCap = _maxWei;
+  }
+
+  function setBlockTimes(uint _presaleStartBlock, uint _presaleUnlimitedStartBlock, uint _crowdsaleStartBlock, uint _crowdsaleEndedBlock)
+    onlyOwner
+    requires(crowdsaleState == state.pendingStart)
+    requires(block.number < _presaleUnlimitedStartBlock)
+    requires(_presaleStartBlock < _presaleUnlimitedStartBlock)
+    requires(_presaleUnlimitedStartBlock < _crowdsaleStartBlock)
+    requires(_crowdsaleStartBlock < _crowdsaleEndedBlock)
+  {
+    presaleStartBlock = _presaleStartBlock;
+    presaleUnlimitedStartBlock = _presaleUnlimitedStartBlock;
+    crowdsaleStartBlock = _crowdsaleStartBlock;
+    crowdsaleEndedBlock = _crowdsaleEndedBlock;
+  }
+
+  function setEthToTokenConversionRate(uint256 _ethToMusicConversion)
+    onlyOwner
+    requires(_ethToMusicConversion > 0)
+  {
+    ethToMusicConversion = _ethToMusicConversion;
   }
 
   //
@@ -295,5 +333,10 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
 
     token.mintTokens(cofounditAddress, cofounditReward);// Issue cofoundit tokens
     cofounditHasClaimedTokens = true;                   // Block further mints from this function
+  }
+
+  function getBlockNumber() constant returns(uint256) {
+    // Not sure how to do this in the test...
+    return block.number;
   }
 }
