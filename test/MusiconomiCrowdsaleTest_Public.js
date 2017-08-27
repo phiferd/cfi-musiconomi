@@ -14,7 +14,7 @@ const ETH = Math.pow(10, 18);
 
 contract('MusiconomiCrowdsale', function () {
 
-  describe("Day 2 of Pre-sale", () => {
+  describe("Day 3: Public sale", () => {
     let crowdsaleContract;
     let tokenContract;
 
@@ -34,8 +34,8 @@ contract('MusiconomiCrowdsale', function () {
     let communityUser2 = web3.eth.accounts[7];
     let publicUser1 = web3.eth.accounts[8];
     let publicUser2 = web3.eth.accounts[9];
-    let minCap = 10 * ETH;
-    let maxCap = 20 * ETH;
+    let minCap = 10000 * ETH;
+    let maxCap = 20000 * ETH;
 
     const communityAddresses = [ppUser1, ppUser2, communityUser1, communityUser2];
     const ppAllowances = [10 * ETH, 5 * ETH, 0, 0];
@@ -55,7 +55,7 @@ contract('MusiconomiCrowdsale', function () {
           firstBlock = _firstBlock.toNumber();
           presaleStartBlock = firstBlock + 2;
           presaleUnlimitedStartBlock = firstBlock + 3;
-          crowdsaleStartBlock = firstBlock + 2000000;
+          crowdsaleStartBlock = firstBlock + 4;
           crowdsaleEndedBlock = firstBlock + 3000000;
         })
         .then(() => crowdsaleContract.setBlockTimes(presaleStartBlock, presaleUnlimitedStartBlock, crowdsaleStartBlock, crowdsaleEndedBlock, {from: crowdsaleOwner}))
@@ -63,28 +63,22 @@ contract('MusiconomiCrowdsale', function () {
 
     it('moves to presaleUnlimited after send', () => {
       return Promise.resolve()
-        .then(() => waitUntilBlock(crowdsaleContract, presaleUnlimitedStartBlock + 1, crowdsaleOwner))
+        .then(() => waitUntilBlock(crowdsaleContract, crowdsaleStartBlock + 1, crowdsaleOwner))
         .then(contribute(crowdsaleContract, ppUser1, 1 * ETH))
-        .then(checkNumberField(crowdsaleContract, "crowdsaleState", 2))
+        .then(checkNumberField(crowdsaleContract, "crowdsaleState", 3))
     });
 
-    it('does not allow presale contributions from non-whitelist members', () => {
+    it('allows contributions from non-whitelist members', () => {
       return Promise.resolve()
-        .then(() => waitUntilBlock(crowdsaleContract, presaleUnlimitedStartBlock+1, crowdsaleOwner))
-        .then(() => assertInvalidOp(crowdsaleContract.send(web3.toWei(1, "ether"), {from: publicUser1})))
+        .then(() => waitUntilBlock(crowdsaleContract, crowdsaleStartBlock+1, crowdsaleOwner))
+        .then(checkNumberMethod(crowdsaleContract, "getContributionAmount", [publicUser1], 0))
+        .then(contribute(crowdsaleOwner, publicUser1, 1*ETH))
+        .then(checkNumberMethod(crowdsaleContract, "getContributionAmount", [publicUser1], 1*ETH))
     });
 
     it('Caps contributions based on hard cap', () => {
       return Promise.resolve()
         .then(checkNumberMethod(crowdsaleContract, "calculateMaxContribution", [ppUser1], maxCap - 1 * ETH))
-    });
-
-    it('Ends after hitting the hard cap', () => {
-      return Promise.resolve()
-        .then(contribute(crowdsaleContract, ppUser1, 10 * ETH))
-        .then(contribute(crowdsaleContract, ppUser2, 10 * ETH))
-        .then(contribute(crowdsaleContract, ppUser2, 1 * ETH)) // forcing it to end since maxCap check happens first rather than last
-        .then(checkNumberField(crowdsaleContract, "crowdsaleState", 4))
     });
   });
 });
