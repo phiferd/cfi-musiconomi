@@ -19,7 +19,7 @@ contract MusiconomiToken is IERC20Token, Owned, Lockable{ // TO-DO: Change contr
   address public crowdsaleContractAddress;
 
   /* Private variables of the token */
-  uint256 supply = 0;
+  uint256 supply = 100 * 10**18; //TO-DO: Set the right ammount of totalsupply
   mapping (address => uint256) balances;
   mapping (address => mapping (address => uint256)) allowances;
 
@@ -27,7 +27,7 @@ contract MusiconomiToken is IERC20Token, Owned, Lockable{ // TO-DO: Change contr
   event Mint(address indexed _to, uint256 _value);
 
   /* Initializes contract */
-  function MusiconomiToken(address _crowdsaleAddress, uint _tokenStartBlock) { // TO-DO: If contract name changed need to change constructor name and set block lock
+  function MusiconomiToken(address _crowdsaleAddress, uint _tokenStartBlock) { // TO-DO: set block lock
     crowdsaleContractAddress = _crowdsaleAddress;
     lockFromSelf(_tokenStartBlock, "Lock before crowdsale starts");
   }
