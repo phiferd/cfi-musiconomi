@@ -47,7 +47,7 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   uint nextContributorToClaim;
   mapping(address => bool) hasClaimedEthWhenFail;
 
-  uint maxTokenSupply; // TO-DO: Set max token supply
+  uint public maxTokenSupply; // TO-DO: Set max token supply
   bool ownerHasClaimedTokens;
   uint cofounditReward; // TO-DO: Set COF reward
   address cofounditAddress; // TO-DO: Set cof address
@@ -335,6 +335,27 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
 
     token.mintTokens(cofounditAddress, cofounditReward);// Issue cofoundit tokens
     cofounditHasClaimedTokens = true;                   // Block further mints from this function
+  }
+
+  function setCofounditReward(uint256 _reward)
+    onlyOwner
+    requires(crowdsaleState == state.pendingStart)
+  {
+    cofounditReward = _reward;
+  }
+
+  function setCofounditAddress(address _address)
+    onlyOwner
+    requires(crowdsaleState == state.pendingStart)
+  {
+    cofounditAddress = _address;
+  }
+
+  function setMaxTokenSupply(uint256 _maxTokenSupply)
+  onlyOwner
+  requires(crowdsaleState == state.pendingStart)
+  {
+    maxTokenSupply = _maxTokenSupply;
   }
 
   function getBlockNumber() constant returns(uint256) {

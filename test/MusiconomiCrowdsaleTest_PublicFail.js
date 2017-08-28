@@ -2,6 +2,7 @@ var Promise = require("bluebird");
 var Token = artifacts.require("./MusiconomiToken.sol");
 var Crowdsale = artifacts.require("./MusiconomiCrowdsale.sol");
 var MisbehavingContract = artifacts.require("./MisbehavingContract.sol");
+const BigNumber = require("bignumber.js");
 
 var Utils = require("./Utils");
 const contribute = Utils.contribute;

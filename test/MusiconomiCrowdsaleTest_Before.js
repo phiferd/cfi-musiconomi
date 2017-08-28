@@ -1,7 +1,9 @@
 var Promise = require("bluebird");
 var Token = artifacts.require("./MusiconomiToken.sol");
 var Crowdsale = artifacts.require("./MusiconomiCrowdsale.sol");
+const BigNumber = require("bignumber.js");
 const ETH = Math.pow(10, 18);
+const MIL = new BigNumber(1000000);
 
 var Utils = require("./Utils");
 const contribute = Utils.contribute;
@@ -32,6 +34,7 @@ contract('MusiconomiCrowdsale', function () {
     const ppAllowances =       [10*ETH, 5*ETH, 0,      0];
     const communityAllowance = [15*ETH, 0,     15*ETH, 15*ETH];
 
+    const capsData = Utils.computeCapsFromUSD(MIL.times(3), MIL.times(6), 300, MIL.times(100));
     before(() => {
       return Promise.resolve()
         .then(() => Crowdsale.new({from: crowdsaleOwner}))
@@ -55,9 +58,9 @@ contract('MusiconomiCrowdsale', function () {
 
     it('sets the min and max caps', () => {
       return Promise.resolve()
-        .then(() => crowdsaleContract.setMinAndMaxCap(100, 200, {from: crowdsaleOwner}))
-        .then(checkNumberField(crowdsaleContract, "minCap", 100))
-        .then(checkNumberField(crowdsaleContract, "maxCap", 200))
+        .then(() => crowdsaleContract.setMinAndMaxCap(capsData.minCap, capsData.maxCap, {from: crowdsaleOwner}))
+        .then(checkNumberField(crowdsaleContract, "minCap", capsData.minCap))
+        .then(checkNumberField(crowdsaleContract, "maxCap", capsData.maxCap))
     });
 
     it('sets the block ranges', () => {
@@ -67,6 +70,12 @@ contract('MusiconomiCrowdsale', function () {
         .then(checkNumberField(crowdsaleContract, "presaleUnlimitedStartBlock", firstBlock+101))
         .then(checkNumberField(crowdsaleContract, "crowdsaleStartBlock", firstBlock+102))
         .then(checkNumberField(crowdsaleContract, "crowdsaleEndedBlock", firstBlock+103))
+    });
+
+    it('sets the max token supply', () => {
+      return Promise.resolve()
+        .then(() => crowdsaleContract.setMaxTokenSupply(capsData.maxTokenSupply, {from: crowdsaleOwner}))
+        .then(checkNumberField(crowdsaleContract, "maxTokenSupply", capsData.maxTokenSupply))
     });
 
     it('allows pp/community to be configured', () => {
