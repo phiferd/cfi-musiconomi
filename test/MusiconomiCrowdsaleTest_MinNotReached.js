@@ -80,6 +80,7 @@ contract('MusiconomiCrowdsale: ', function () {
         .then(checkNumberField(crowdsaleContract, "crowdsaleState", 1))
         .then(() => waitUntilBlock(crowdsaleContract, presaleUnlimitedStartBlock + 1, crowdsaleOwner))
         .then(contribute(crowdsaleContract, communityUser1, 1 * ETH))
+        .then(checkNumberMethod(crowdsaleContract, "getContributionAmount", [communityUser1], 1*ETH))
         .then(checkNumberField(crowdsaleContract, "crowdsaleState", 2))
         .then(() => waitUntilBlock(crowdsaleContract, crowdsaleStartBlock + 1, crowdsaleOwner))
         .then(() => misbehavingContract.contribute(crowdsaleContract.address, {from: other, gas: 940000}))
@@ -143,15 +144,15 @@ contract('MusiconomiCrowdsale: ', function () {
 
     it('does not allow user to claim refund after batch', () => {
       return Promise.resolve()
-        .then(assertInvalidOp(crowdsaleContract.claimEthIfFailed({from: communityUser1})))
+        .then(assertInvalidOp(crowdsaleContract.claimEthIfFailed({from: other})))
     });
 
     it('does not allow non-owner to batch refund', () => {
       return Promise.resolve()
-        .then(assertInvalidOp(crowdsaleContract.batchReturnEthIfFailed(10, {from: communityUser1})))
+        .then(assertInvalidOp(crowdsaleContract.batchReturnEthIfFailed(10, {from: other})))
     });
 
-    it('should not have a balance anymore', () => {
+    it('should only have the unrefundable amount', () => {
       return Promise.resolve()
         .then(() => web3.eth.getBalance(crowdsaleContract.address))
         .then(_b => assert.equal(unrefundableAmount, _b.toNumber()));
@@ -168,10 +169,11 @@ contract('MusiconomiCrowdsale: ', function () {
         .then((_newBal) => multiSigBalanceAfter = _newBal)
         .then(() => assert((multiSigBalanceBefore.plus(unrefundableAmount)).equals(multiSigBalanceAfter)))
     });
+
+    it('should have a balance of zero', () => {
+      return Promise.resolve()
+        .then(() => web3.eth.getBalance(crowdsaleContract.address))
+        .then(_b => assert.equal(0, _b.toNumber()));
+    });
   });
 });
-
-// 67603149200000000000
-//  1000000000000000000
-// 68504020600000000000
-//    99128599999995900

@@ -5,12 +5,12 @@ module.exports = {
   printBalance: function(text, address) {
     return () => Promise.resolve()
       .then(() => web3.eth.getBalance(address))
-      .then(a => console.log(text + ": " + a));
+      .then(a => console.log(text + ": eth=" + a.dividedBy(ETH) + ", wei=" + a));
   },
 
   contribute: function (contract, sender, value) {
     return () => Promise.resolve()
-      .then(() => contract.sendTransaction({from: sender, value: value, gas: 940000}))
+      .then(() => contract.sendTransaction({from: sender, value: value, gas: 200000}))
   },
 
   checkNumberMethod: function (contract, field, args, _expected) {
