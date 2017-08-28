@@ -1,11 +1,11 @@
 pragma solidity ^0.4.13;
 
-import "./Utils/ReentracyHandlingContract.sol";
+import "./Utils/ReentrnacyHandlingContract.sol";
 import "./Utils/Owned.sol";
 import "./Interfaces/IToken.sol";
 import "./Interfaces/IERC20Token.sol";
 
-contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
+contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
 
   struct ContributorData{
     uint priorityPassAllowance;
@@ -15,11 +15,11 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
     uint tokensIssued;
   }
 
-  mapping(address => ContributorData) contributorList;
+  mapping(address => ContributorData) public contributorList;
   uint nextContributorIndex;
   mapping(uint => address) contributorIndexes;
 
-  state crowdsaleState = state.pendingStart;
+  state public crowdsaleState = state.pendingStart;
   enum state { pendingStart, priorityPass, openedPriorityPass, crowdsale, crowdsaleEnded }
 
   uint public presaleStartBlock = 3450427; // TO-DO: Set block
@@ -33,6 +33,7 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   event CrowdsaleEnded(uint blockNumber);
   event ErrorSendingETH(address to, uint amount);
   event MinCapReached(uint blockNumber);
+  event MaxCapReached(uint blockNumber);
 
   IToken token = IToken(0x0);
   uint ethToMusicConversion = 10; // TO-DO: Set conversion eth to music
@@ -41,7 +42,7 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   uint maxCap = 2 * 10**18;  // TO-DO: Set max CAP
   uint ethRaised;
 
-  address multisigAddress;
+  address public multisigAddress;
 
   uint nextContributorToClaim;
   mapping(address => bool) hasClaimedEthWhenFail;
@@ -184,14 +185,14 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   //
   // Push contributor data to the contract before the crowdsale so that they are eligible for priorit pass
   //
-  function editContributors(address[] _contributorAddresses, uint[] _contributorPPAllowances, uint[] _contributorComunityAllowance) onlyOwner{
+  function editContributors(address[] _contributorAddresses, uint[] _contributorPPAllowances, uint[] _contributorCommunityAllowance) onlyOwner{
     require(crowdsaleState == state.pendingStart);                                                        // Check if crowdsale has started
-    require(_contributorAddresses.length == _contributorPPAllowances.length && _contributorAddresses.length == _contributorComunityAllowance.length); // Check if input data is correct
+    require(_contributorAddresses.length == _contributorPPAllowances.length && _contributorAddresses.length == _contributorCommunityAllowance.length); // Check if input data is correct
 
     for(uint cnt = 0; cnt < _contributorAddresses.length; cnt++){
       contributorList[_contributorAddresses[cnt]].isActive = true;                                        // Activate contributor
       contributorList[_contributorAddresses[cnt]].priorityPassAllowance = _contributorPPAllowances[cnt];  // Set PP allowance
-      contributorList[_contributorAddresses[cnt]].communityAllowance = _contributorComunityAllowance[cnt];// Set community whitelist allowance
+      contributorList[_contributorAddresses[cnt]].communityAllowance = _contributorCommunityAllowance[cnt];// Set community whitelist allowance
       contributorIndexes[nextContributorIndex] = _contributorAddresses[cnt];                              // Set users index
       nextContributorIndex++;
     }
@@ -200,8 +201,8 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   //
   // Method is needed for recovering tokens accedentaly sent to token address
   //
-  function salvageTokensFromContract(address _tokenAddres, address _to, uint _amount) onlyOwner{
-    IERC20Token(_tokenAddres).transfer(_to, _amount);
+  function salvageTokensFromContract(address _tokenAddress, address _to, uint _amount) onlyOwner{
+    IERC20Token(_tokenAddress).transfer(_to, _amount);
   }
 
   //
@@ -297,5 +298,9 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
 
     token.mintTokens(cofounditAddress, cofounditReward);// Issue cofoundit tokens
     cofounditHasClaimedTokens = true;                   // Block further mints from this function
+  }
+
+  function getTokenAddress() constant returns(address){
+    return address(token);
   }
 }
