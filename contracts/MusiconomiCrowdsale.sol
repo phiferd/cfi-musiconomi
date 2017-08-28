@@ -53,6 +53,8 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
   address cofounditAddress; // TO-DO: Set cof address
   bool cofounditHasClaimedTokens;
 
+  uint public refundCount = 0;
+
   modifier requires(bool condition) {
     require(condition);
     _;
@@ -249,6 +251,9 @@ contract MusiconomiCrowdsale is ReentracyHandlingContract, Owned{
         hasClaimedEthWhenFail[currentParticipantAddress] = true;                      // Set that he has claimed
         if (!currentParticipantAddress.send(contribution)){                           // Refund eth
           ErrorSendingETH(currentParticipantAddress, contribution);                   // If there is an issue raise event for manual recovery
+        }
+        else {
+            refundCount++;
         }
       }
       nextContributorToClaim += 1;                                                    // Repeat

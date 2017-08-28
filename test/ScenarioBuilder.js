@@ -35,6 +35,8 @@ const scenarioBuilder = {
     config.communityAllowance = [15 * ETH, 0, 15 * ETH, 15 * ETH];
 
     config.cofounditReward = config.capsData.maxTokenSupply.dividedBy(50);
+    scenarioBuilder.getAllBalances(config)
+      .then(b => config.startingBalances = b);
 
     return Promise.resolve()
       .then(() => Crowdsale.new({from: config.crowdsaleOwner}))
@@ -135,6 +137,29 @@ const scenarioBuilder = {
           .then(checkNumberField(config.crowdsaleContract, "crowdsaleState", 4))
 
           .then(() => config)
+      })
+  },
+
+  getAllBalances: function(config) {
+    return Promise.all([
+      web3.eth.getBalance(config.ppUser1),
+      web3.eth.getBalance(config.ppUser2),
+      web3.eth.getBalance(config.communityUser1),
+      web3.eth.getBalance(config.communityUser2),
+      web3.eth.getBalance(config.publicUser1),
+      web3.eth.getBalance(config.publicUser2),
+      web3.eth.getBalance(config.other),
+      web3.eth.getBalance(config.multiSig)]
+    )
+  },
+
+  compareBalances: function(maxGasAllowance, starting, ending) {
+    return Promise.resolve()
+      .then(() => {
+        for (let i=0; i < starting.length; i++) {
+          const delta = starting[i].minus(ending[i]).abs();
+          assert(delta.lessThan(maxGasAllowance), "Values are not within the gas allowance");
+        }
       })
   },
 
