@@ -11,9 +11,9 @@ contract MusiconomiToken is IERC20Token, Owned, Lockable{
   using SafeMath for uint256;
 
   /* Public variables of the token */
-  string public standard = "Musiconomi token v1.0"; // TO-DO: Change standard
-  string public name = "Musiconomi"; // TO-DO: Change token name
-  string public symbol = "MCI"; // TO-DO: Change symbol
+  string public standard = "Musiconomi token v1.0";
+  string public name = "Musiconomi";
+  string public symbol = "MCI";
   uint8 public decimals = 18;
 
   address public crowdsaleContractAddress;

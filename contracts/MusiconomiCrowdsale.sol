@@ -25,7 +25,7 @@ contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
   uint public presaleStartBlock = 4216500;
   uint public presaleUnlimitedStartBlock = 4219800;
   uint public crowdsaleStartBlock = 4223100;
-  uint public crowdsaleEndedBlock = ; //TO-DO: Set end block
+  uint public crowdsaleEndedBlock = 4316000;
 
   event PresaleStarted(uint blockNumber);
   event PresaleUnlimitedStarted(uint blockNumber);
