@@ -22,10 +22,10 @@ contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
   state public crowdsaleState = state.pendingStart;
   enum state { pendingStart, priorityPass, openedPriorityPass, crowdsale, crowdsaleEnded }
 
-  uint public presaleStartBlock = 4216670;
-  uint public presaleUnlimitedStartBlock = 4220000;
-  uint public crowdsaleStartBlock = 4223470;
-  uint public crowdsaleEndedBlock = 4318560;
+  uint public presaleStartBlock = 4217240;
+  uint public presaleUnlimitedStartBlock = 4220630;
+  uint public crowdsaleStartBlock = 4224030;
+  uint public crowdsaleEndedBlock = 4319130;
 
   event PresaleStarted(uint blockNumber);
   event PresaleUnlimitedStarted(uint blockNumber);
