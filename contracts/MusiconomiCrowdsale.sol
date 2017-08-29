@@ -36,7 +36,7 @@ contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
   event MaxCapReached(uint blockNumber);
 
   IToken token = IToken(0x0);
-  uint ethToMusicConversion = 1416.591115140526;
+  uint ethToMusicConversion = 1416;
 
   uint minCap = 8824000000000000000000;
   uint maxCap = 17648000000000000000000;
