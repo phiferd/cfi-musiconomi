@@ -186,7 +186,6 @@ contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
   // Push contributor data to the contract before the crowdsale so that they are eligible for priorit pass
   //
   function editContributors(address[] _contributorAddresses, uint[] _contributorPPAllowances, uint[] _contributorCommunityAllowance) onlyOwner{
-    require(crowdsaleState == state.pendingStart);                                                        // Check if crowdsale has started
     require(_contributorAddresses.length == _contributorPPAllowances.length && _contributorAddresses.length == _contributorCommunityAllowance.length); // Check if input data is correct
 
     for(uint cnt = 0; cnt < _contributorAddresses.length; cnt++){

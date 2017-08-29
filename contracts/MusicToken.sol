@@ -28,8 +28,8 @@ contract MusiconomiToken is IERC20Token, Owned, Lockable{
 
   /* Initializes contract */
   function MusiconomiToken() { // TO-DO: set block lock
-    crowdsaleContractAddress = 0x68223dF196B3c46b7eb30a154DC79AA0A9d7907A;
-    lockFromSelf(4342330, "Lock before crowdsale starts");
+    crowdsaleContractAddress = 0xB9e0FC2a1C9d567Af555E07E72f27E686f2c6872;
+    lockFromSelf(4342900, "Lock before crowdsale starts");
   }
 
   /* Returns total supply of issued tokens */
