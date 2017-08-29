@@ -22,10 +22,10 @@ contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
   state public crowdsaleState = state.pendingStart;
   enum state { pendingStart, priorityPass, openedPriorityPass, crowdsale, crowdsaleEnded }
 
-  uint public presaleStartBlock = 3450427; // TO-DO: Set block
-  uint public presaleUnlimitedStartBlock = presaleStartBlock + 75;//cca 30min// TO-DO: Set block
-  uint public crowdsaleStartBlock = presaleUnlimitedStartBlock + 75;//cca 60min// TO-DO: Set block
-  uint public crowdsaleEndedBlock = crowdsaleStartBlock + 75;//cca 120min// TO-DO: Set block
+  uint public presaleStartBlock = 4216500;
+  uint public presaleUnlimitedStartBlock = 4219800;
+  uint public crowdsaleStartBlock = 4223100;
+  uint public crowdsaleEndedBlock = ; //TO-DO: Set end block
 
   event PresaleStarted(uint blockNumber);
   event PresaleUnlimitedStarted(uint blockNumber);
@@ -36,10 +36,10 @@ contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
   event MaxCapReached(uint blockNumber);
 
   IToken token = IToken(0x0);
-  uint ethToMusicConversion = 10; // TO-DO: Set conversion eth to music
+  uint ethToMusicConversion = 1416591115140526000000;
 
-  uint minCap = 1 * 10**18;  // TO-DO: Set min CAP
-  uint maxCap = 2 * 10**18;  // TO-DO: Set max CAP
+  uint minCap = 8824000000000000000000;
+  uint maxCap = 17648000000000000000000;
   uint ethRaised;
 
   address public multisigAddress;
@@ -47,10 +47,10 @@ contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
   uint nextContributorToClaim;
   mapping(address => bool) hasClaimedEthWhenFail;
 
-  uint maxTokenSupply = 100 * 10**18; // TO-DO: Set max token supply
+  uint maxTokenSupply = 1000000000000000000000000000;
   bool ownerHasClaimedTokens;
-  uint cofounditReward = 20 * 10**18; // TO-DO: Set COF reward
-  address cofounditAddress = 0xAB92ECEEDE5C14A7024983F81B998Fb9b7b8cfd7; // TO-DO: Set cof address
+  uint cofounditReward = ; // TO-DO: Set COF reward
+  address cofounditAddress = 0x8C0DB695de876a42cE2e133ca00fdF59A9166708;
   bool cofounditHasClaimedTokens;
 
   //

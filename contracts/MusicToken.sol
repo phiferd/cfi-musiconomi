@@ -19,7 +19,7 @@ contract MusiconomiToken is IERC20Token, Owned, Lockable{
   address public crowdsaleContractAddress;
 
   /* Private variables of the token */
-  uint256 supply = 100 * 10**18; //TO-DO: Set the right ammount of totalsupply
+  uint256 supply = 0;
   mapping (address => uint256) balances;
   mapping (address => mapping (address => uint256)) allowances;
 
@@ -91,28 +91,5 @@ contract MusiconomiToken is IERC20Token, Owned, Lockable{
 
   function salvageTokensFromContract(address _tokenAddress, address _to, uint _amount) onlyOwner{
     IERC20Token(_tokenAddress).transfer(_to, _amount);
-  }
-
-  // FOR TESTING TO-DO: Urgently delete before production
-
-  function bypassMint(address _to, uint _amount){
-    supply = supply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(0x0, _to, _amount);
-  }
-
-  function bypassBurn(address _from, uint _amount){
-    supply = supply.sub(_amount);
-    balances[_from] = balances[_from].sub(_amount);
-  }
-
-  function bypassSetCrowdsaleAddress(address _newAddress){
-    crowdsaleContractAddress = _newAddress;
-  }
-
-  function bypassLockUntill(uint _amount){
-    lockedUntilBlock = _amount;
-    ContractLocked(_amount, "Bypassed lock");
   }
 }
