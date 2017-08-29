@@ -49,7 +49,7 @@ contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
 
   uint maxTokenSupply = 1000000000000000000000000000;
   bool ownerHasClaimedTokens;
-  uint cofounditReward = ; // TO-DO: Set COF reward
+  uint cofounditReward = 270000000000000000000000;
   address cofounditAddress = 0x8C0DB695de876a42cE2e133ca00fdF59A9166708;
   bool cofounditHasClaimedTokens;
 
