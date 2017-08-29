@@ -47,9 +47,9 @@ contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
   uint nextContributorToClaim;
   mapping(address => bool) hasClaimedEthWhenFail;
 
-  uint maxTokenSupply = 1000000000000000000000000000;
+  uint maxTokenSupply = 100000000000000000000000000;
   bool ownerHasClaimedTokens;
-  uint cofounditReward = 270000000000000000000000;
+  uint cofounditReward = 2700000000000000000000000;
   address cofounditAddress = 0x8C0DB695de876a42cE2e133ca00fdF59A9166708;
   bool cofounditHasClaimedTokens;
 
