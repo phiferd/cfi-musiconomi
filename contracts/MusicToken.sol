@@ -27,7 +27,7 @@ contract MusiconomiToken is IERC20Token, Owned, Lockable{
   event Mint(address indexed _to, uint256 _value);
 
   /* Initializes contract */
-  function MusiconomiToken() { // TO-DO: set block lock
+  function MusiconomiToken() {
     crowdsaleContractAddress = 0xB9e0FC2a1C9d567Af555E07E72f27E686f2c6872;
     lockFromSelf(4342900, "Lock before crowdsale starts");
   }
