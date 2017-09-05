@@ -1,6 +1,7 @@
 pragma solidity ^0.4.13;
 import "./Interfaces/IERC20Token.sol";
 import "./Utils/Owned.sol";
+import "./Utils/SafeMath.sol";
 
 /*
  * A SingleTokenLocker allows a user to create a locker that can lock a single type of ERC20 token.
@@ -30,6 +31,9 @@ import "./Utils/Owned.sol";
  * In this case, no separate "confirm" step is needed (confirm happens automatically)
  */
 contract SingleTokenLocker is Owned {
+
+  using SafeMath for uint256;
+
   // the type of token this locker is used for
   IERC20Token public token;
 
@@ -305,7 +309,7 @@ contract SingleTokenLocker is Owned {
     internal
   {
     promise.state = PromiseState.confirmed;
-    lockedTokenBalance += promise.amount;
+    lockedTokenBalance = lockedTokenBalance.add(promise.amount);
     logPromiseConfirmed(promise.promiseId);
   }
 
@@ -325,7 +329,7 @@ contract SingleTokenLocker is Owned {
     promise.lockedUntil = lockedUntil;
     promise.state = PromiseState.pending;
 
-    promisedTokenBalance += promise.amount;
+    promisedTokenBalance = promisedTokenBalance.add(promise.amount);
 
     logPromiseCreated(promiseId, recipient, amount, lockedUntil);
 
@@ -337,12 +341,12 @@ contract SingleTokenLocker is Owned {
     internal
   {
     TokenPromise storage promise = promises[promiseId];
-    promisedTokenBalance -= promise.amount;
+    promisedTokenBalance = promisedTokenBalance.sub(promise.amount);
 
     address finalRecipient;
     if (execute) {
       if (promise.state == PromiseState.confirmed) {
-        lockedTokenBalance -= promise.amount;
+        lockedTokenBalance = lockedTokenBalance.sub(promise.amount);
       }
       promise.state = PromiseState.executed;
       finalRecipient = promise.recipient;
@@ -367,7 +371,7 @@ contract SingleTokenLocker is Owned {
   {
     uint256 uncommittedBalance = uncommittedTokenBalance();
     if (uncommittedBalance < amount) {
-      require(token.transferFrom(owner, this, amount - uncommittedBalance));
+      require(token.transferFrom(owner, this, amount.sub(uncommittedBalance)));
     }
   }
 }
