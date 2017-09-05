@@ -81,9 +81,14 @@ contract('SingleTokenLocker', function () {
         .then(tx => {
           return Promise.resolve()
             .then(Utils.checkNumberField(tokenLocker, "promisedTokenBalance", amount))
+            .then(Utils.checkNumberField(tokenLocker, "tokenBalance", amount))
+
             .then(() => tokenLocker.cancel(tx, {from: lockerOwner}))
             .then(Utils.checkNumberField(tokenLocker, "promisedTokenBalance", 0))
+            .then(Utils.checkNumberField(tokenLocker, "tokenBalance", amount))
+
             .then(() => assertInvalidOp(tokenLocker.confirm(tx, {from: recipient1})))
+
         })
     });
 

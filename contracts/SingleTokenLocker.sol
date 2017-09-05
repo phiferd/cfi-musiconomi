@@ -335,26 +335,22 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     TokenPromise storage promise = promises[promiseId];
     promisedTokenBalance = promisedTokenBalance.sub(promise.amount);
 
-    address finalRecipient;
     if (execute) {
       if (promise.state == PromiseState.confirmed) {
         lockedTokenBalance = lockedTokenBalance.sub(promise.amount);
       }
       promise.state = PromiseState.executed;
-      finalRecipient = promise.recipient;
-
       logPromiseFulfilled(promise.promiseId);
-
+      token.transfer(promise.recipient, promise.amount);
     }
     else { // cancel
       assert(promise.state == PromiseState.pending);
       promise.state = PromiseState.canceled;
-      finalRecipient = owner;
 
       logPromiseCanceled(promise.promiseId);
+      // no transfer back to owner required.  The owner
+      // can always retrieve the tokens if they want
     }
-
-    require(token.transfer(finalRecipient, promise.amount));
   }
 
   function ensureTokensAvailable(uint256 amount)
