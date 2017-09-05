@@ -113,6 +113,13 @@ contract SingleTokenLocker is Owned {
     _;
   }
 
+  modifier thenAssertState() {
+    _;
+    uint256 balance = tokenBalance();
+    assert(lockedTokenBalance <= promisedTokenBalance);
+    assert(promisedTokenBalance <= balance);
+  }
+
   // Constructor
   function SingleTokenLocker(address tokenAddress) {
     token = IERC20Token(tokenAddress);
@@ -192,7 +199,7 @@ contract SingleTokenLocker is Owned {
     onlyOwner
     requires(_amount <= uncommittedTokenBalance())
   {
-    token.transfer(owner, _amount);
+    require(token.transfer(owner, _amount));
   }
 
   function withdrawAllUncommittedTokens()
@@ -294,19 +301,22 @@ contract SingleTokenLocker is Owned {
 
   // ------------------ internal methods ------------------ //
   function doConfirm(TokenPromise storage promise)
+    thenAssertState
     internal
   {
     promise.state = PromiseState.confirmed;
     lockedTokenBalance += promise.amount;
-
     logPromiseConfirmed(promise.promiseId);
   }
 
   // creates and stores a new promise object, updated the totalLockedTokens amount
   function createPromise(address recipient, uint256 amount, uint256 lockedUntil)
+    thenAssertState
     internal
     returns(TokenPromise storage promise)
   {
+    assert(uncommittedTokenBalance() >= amount);
+
     uint256 promiseId = nextPromiseId++;
     promise = promises[promiseId];
     promise.promiseId = promiseId;
@@ -323,6 +333,7 @@ contract SingleTokenLocker is Owned {
   }
 
   function fulfillPromise(uint256 promiseId, bool execute)
+    thenAssertState
     internal
   {
     TokenPromise storage promise = promises[promiseId];
@@ -347,7 +358,7 @@ contract SingleTokenLocker is Owned {
       logPromiseCanceled(promise.promiseId);
     }
 
-    token.transfer(finalRecipient, promise.amount);
+    require(token.transfer(finalRecipient, promise.amount));
   }
 
   function ensureTokensAvailable(uint256 amount)
@@ -356,7 +367,7 @@ contract SingleTokenLocker is Owned {
   {
     uint256 uncommittedBalance = uncommittedTokenBalance();
     if (uncommittedBalance < amount) {
-      token.transferFrom(owner, this, amount - uncommittedBalance);
+      require(token.transferFrom(owner, this, amount - uncommittedBalance));
     }
   }
 }
