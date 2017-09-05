@@ -2,6 +2,8 @@ pragma solidity ^0.4.13;
 import "./Interfaces/IERC20Token.sol";
 import "./Utils/Owned.sol";
 import "./Utils/SafeMath.sol";
+import "./Utils/ReentrancyHandler.sol";
+import "./Utils/StandardContract.sol";
 
 /*
  * A SingleTokenLocker allows a user to create a locker that can lock a single type of ERC20 token.
@@ -30,7 +32,7 @@ import "./Utils/SafeMath.sol";
  * An owner can lockup his/her own tokens in order to demonstrate the they will not be moved until a particular time.
  * In this case, no separate "confirm" step is needed (confirm happens automatically)
  */
-contract SingleTokenLocker is Owned {
+contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
 
   using SafeMath for uint256;
 
@@ -89,31 +91,14 @@ contract SingleTokenLocker is Owned {
     _;
   }
 
-  // allows usage of "require" as a modifier
-  modifier requires(bool b) {
-    require(b);
-    _;
-  }
-
-  // require at least one of the two conditions to be true
-  modifier requiresOne(bool b1, bool b2) {
-    require(b1 || b2);
-    _;
-  }
-
   modifier promiseExists(uint promiseId) {
     TokenPromise storage promise = promises[promiseId];
     require(promise.recipient != 0);
     _;
   }
 
-  modifier notNull(address a) {
-    require(a != 0);
-    _;
-  }
-
-  modifier notZero(uint256 a) {
-    require(a != 0);
+  modifier hasUncommittedTokens(uint256 tokens) {
+    require(tokens <= uncommittedTokenBalance());
     _;
   }
 
@@ -142,6 +127,7 @@ contract SingleTokenLocker is Owned {
     onlyOwner
     notNull(recipient)
     notZero(amount)
+    noReentrancy
     external
   {
     // if the locker does not have sufficient unlocked tokens, assume it has enough
@@ -168,6 +154,7 @@ contract SingleTokenLocker is Owned {
       msg.sender == owner,
       msg.sender == promises[promiseId].recipient
     )
+    noReentrancy
     external
   {
     fulfillPromise(promiseId, false);
@@ -182,6 +169,7 @@ contract SingleTokenLocker is Owned {
     requires(block.timestamp >= promises[promiseId].lockedUntil)
     requires(promises[promiseId].state != PromiseState.canceled)
     requires(promises[promiseId].state != PromiseState.executed)
+    noReentrancy
     external
   {
     fulfillPromise(promiseId, true);
@@ -193,6 +181,7 @@ contract SingleTokenLocker is Owned {
     promiseExists(promiseId)
     onlyRecipient(promiseId)
     requires(promises[promiseId].state == PromiseState.pending)
+    noReentrancy
     external
   {
     doConfirm(promises[promiseId]);
@@ -208,6 +197,8 @@ contract SingleTokenLocker is Owned {
 
   function withdrawAllUncommittedTokens()
     onlyOwner
+    noReentrancy
+    external
   {
     withdrawUncommittedTokens(uncommittedTokenBalance());
   }
@@ -278,6 +269,8 @@ contract SingleTokenLocker is Owned {
       _tokenAddress != address(token),
       _amount <= uncommittedTokenBalance()
     )
+    noReentrancy
+    external
   {
     IERC20Token(_tokenAddress).transfer(_to, _amount);
   }
@@ -293,7 +286,7 @@ contract SingleTokenLocker is Owned {
     constant
     returns(uint256)
   {
-    return token.balanceOf(address(this)) - promisedTokenBalance;
+    return tokenBalance() - promisedTokenBalance;
   }
 
   function pendingTokenBalance()
@@ -315,12 +308,11 @@ contract SingleTokenLocker is Owned {
 
   // creates and stores a new promise object, updated the totalLockedTokens amount
   function createPromise(address recipient, uint256 amount, uint256 lockedUntil)
+    hasUncommittedTokens(amount)
     thenAssertState
     internal
     returns(TokenPromise storage promise)
   {
-    assert(uncommittedTokenBalance() >= amount);
-
     uint256 promiseId = nextPromiseId++;
     promise = promises[promiseId];
     promise.promiseId = promiseId;
@@ -371,7 +363,8 @@ contract SingleTokenLocker is Owned {
   {
     uint256 uncommittedBalance = uncommittedTokenBalance();
     if (uncommittedBalance < amount) {
-      require(token.transferFrom(owner, this, amount.sub(uncommittedBalance)));
+      token.transferFrom(owner, this, amount.sub(uncommittedBalance));
+      assert(uncommittedTokenBalance() >= amount);
     }
   }
 }

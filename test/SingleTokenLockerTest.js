@@ -61,11 +61,8 @@ contract('SingleTokenLocker', function () {
 
         .then(() => tokenLocker.getTransactionCount(recipient1, true, true, true))
         .then((c) => tokenLocker.getPromiseIds(0, c, recipient1, true, true, true))
-        .then(p => console.log("recipient1: " + p))
-
         .then(() => tokenLocker.getTransactionCount(recipient2, true, true, true))
         .then((c) => tokenLocker.getPromiseIds(0, c, recipient2, true, true, true))
-        .then(p => console.log("recipient2: " + p))
     });
 
     it("can't lockup more than it its allowance", () => {
