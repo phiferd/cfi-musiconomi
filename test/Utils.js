@@ -30,6 +30,12 @@ module.exports = {
       .then(_value => assert.equal(expected, _value, field + " was " + _value + ", expected " + expected));
   },
 
+  checkMethod: function (contract, field, args, expected) {
+    return () => Promise.resolve()
+      .then(() => contract[field].call(...args))
+      .then(_value => assert.equal(expected, _value, field + " was " + _value + ", expected " + expected));
+  },
+
   assertInvalidOp: function (p) {
     return p
       .then(() => assert(false, "It should have failed"))

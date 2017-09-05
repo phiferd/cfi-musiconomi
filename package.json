@@ -7,7 +7,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "truffle test"
+    "compile": "C:\\Users\\Dan\\AppData\\Roaming\\npm\\truffle compile",
+    "test": "npm compile && C:\\Users\\Dan\\AppData\\Roaming\\npm\\truffle test test/TokenLockerTest.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,7 @@
     "babel-core": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
     "bignumber.js": "^4.0.2",
-    "bluebird": "^3.5.0"
+    "bluebird": "^3.5.0",
+    "solidity-coverage": "^0.2.2"
   }
 }
