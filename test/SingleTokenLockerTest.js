@@ -92,6 +92,19 @@ contract('SingleTokenLocker', function () {
         })
     });
 
+    it('allows owner to cancel then withdraw', () => {
+      const amount = 10;
+      return Promise.resolve()
+        .then(() => getBlockNumber()).then(b => getBlock(b)).then(b => currentTime = b.timestamp)
+        .then(() => lockTokens(tokenLocker, recipient1, amount, currentTime+5))
+        .then(tx => {
+          return Promise.resolve()
+            .then(() => tokenLocker.cancel(tx, {from: lockerOwner}))
+            .then(() => tokenLocker.withdrawAllUncommittedTokens({from: lockerOwner}))
+            .then(Utils.checkNumberField(tokenLocker, "tokenBalance", 0))
+        })
+    });
+
     it('DOES NOT allow owner to cancel AFTER confirm', () => {
       const amount = 10;
       return Promise.resolve()

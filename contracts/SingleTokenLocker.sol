@@ -191,8 +191,10 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
   function withdrawUncommittedTokens(uint _amount)
     onlyOwner
     requires(_amount <= uncommittedTokenBalance())
+    noReentrancy
+    external
   {
-    require(token.transfer(owner, _amount));
+    token.transfer(owner, _amount);
   }
 
   function withdrawAllUncommittedTokens()
@@ -200,7 +202,26 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     noReentrancy
     external
   {
-    withdrawUncommittedTokens(uncommittedTokenBalance());
+    token.transfer(owner, uncommittedTokenBalance());
+  }
+
+  // tokens can be transferred out by the owner if either
+  //  1: The tokens are not the type that are governed by this contract (accidentally sent here, most likely)
+  //  2: The tokens are not already promised to a recipient (either pending or confirmed)
+  //
+  // If neither of these conditions are true, then allowing the owner to transfer the tokens
+  // out would violate the purpose of the token locker, which is to prove that the tokens
+  // cannot be moved.
+  function salvageTokensFromContract(address _tokenAddress, address _to, uint _amount)
+    onlyOwner
+    requiresOne(
+      _tokenAddress != address(token),
+      _amount <= uncommittedTokenBalance()
+    )
+    noReentrancy
+    external
+  {
+      IERC20Token(_tokenAddress).transfer(_to, _amount);
   }
 
   function isConfirmed(uint256 promiseId)
@@ -252,27 +273,6 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     _promiseIds = new uint[](to - from);
     for (i=from; i<to; i++)
       _promiseIds[i - from] = promiseIdsTemp[i];
-  }
-
-
-
-  // tokens can be transferred out by the owner if either
-  //  1: The tokens are not the type that are governed by this contract (accidentally sent here, most likely)
-  //  2: The tokens are not already promised to a recipient (either pending or confirmed)
-  //
-  // If neither of these conditions are true, then allowing the owner to transfer the tokens
-  // out would violate the purpose of the token locker, which is to prove that the tokens
-  // cannot be moved.
-  function salvageTokensFromContract(address _tokenAddress, address _to, uint _amount)
-    onlyOwner
-    requiresOne(
-      _tokenAddress != address(token),
-      _amount <= uncommittedTokenBalance()
-    )
-    noReentrancy
-    external
-  {
-    IERC20Token(_tokenAddress).transfer(_to, _amount);
   }
 
   function tokenBalance()
@@ -328,6 +328,12 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     return promise;
   }
 
+  /**
+   * Changes the state of the promise and updates the totals.  A promise can move from
+   *   - pending -> canceled
+   *   - pending -> executed
+   *   - confirmed -> executed
+   */
   function fulfillPromise(uint256 promiseId, bool execute)
     thenAssertState
     internal
@@ -353,6 +359,11 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     }
   }
 
+  /**
+   * Checks the uncommitted balance to ensure there the locker has enough tokens to guarantee the
+   * amount given can be promised.  If the locker's balance is not enough, the locker will attempt to transfer
+   * tokens from the owner.
+   */
   function ensureTokensAvailable(uint256 amount)
     onlyOwner
     internal
