@@ -50,20 +50,27 @@ contract('SingleTokenLocker', function () {
     });
 
     it('can list promises', () => {
-      const amount = 10;
+      let tx1;
       return Promise.resolve()
         .then(() => getBlockNumber()).then(b => getBlock(b))
         .then(b => currentTime = b.timestamp)
-        .then(() => lockTokens(tokenLocker, recipient1, 1, currentTime+5))
+        .then(() => lockTokens(tokenLocker, recipient1, 1, currentTime+5)).then(tx => tx1 = tx)
         .then(() => lockTokensAndConfirm(tokenLocker, recipient1, 2, currentTime+6))
         .then(() => lockTokens(tokenLocker, recipient2, 3, currentTime+7))
         .then(() => lockTokensAndConfirm(tokenLocker, recipient2, 4, currentTime+8))
 
-        .then(() => tokenLocker.getTransactionCount(recipient1, true))
-        .then((c) => tokenLocker.getPromiseIds(0, c, recipient1, true))
-        .then((results) => assert.equals(results.length, 3))
-        .then(() => tokenLocker.getTransactionCount(recipient2, true))
-        .then((c) => tokenLocker.getPromiseIds(0, c, recipient2, true))
+        .then(() => assertPromiseCount(tokenLocker, recipient1, false, 2))
+        .then(() => assertPromiseCount(tokenLocker, recipient2, false, 2))
+        .then(() => assertPromiseCount(tokenLocker, 0x0, false, 4))
+        .then(() => assertPromiseCount(tokenLocker, 0x0, true, 4))
+
+        // wait until it's ok to claim, then claim
+        .then(() => waitUntilTime(currentTime + 5, otherUser1))
+        .then(() => tokenLocker.collect(tx1, {from: recipient1}))
+
+        // make sure the promises go down by one
+        .then(() => assertPromiseCount(tokenLocker, 0x0, false, 3))
+        .then(() => assertPromiseCount(tokenLocker, 0x0, true, 4))
     });
 
     it("can't lockup more than it its allowance", () => {
@@ -89,7 +96,6 @@ contract('SingleTokenLocker', function () {
             .then(Utils.checkNumberField(tokenLocker, "tokenBalance", amount))
 
             .then(() => assertInvalidOp(tokenLocker.confirm(tx, {from: recipient1})))
-
         })
     });
 
@@ -192,15 +198,15 @@ contract('SingleTokenLocker', function () {
 
         .then(() => lockTokens(tokenLocker, recipient1, amount1, currentTime + lockDuration1))
         .then(tx => tx1 = tx)
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false], 1))
+        .then(Utils.checkNumberMethod(tokenLocker, "getPromiseCount", [0, false], 1))
         .then(() => tokenLocker.confirm(tx1, {from: recipient1}))
-        .then(() => Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false], 0))
-        .then(() => Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, TRUE], 1))
+        .then(() => Utils.checkNumberMethod(tokenLocker, "getPromiseCount", [0, false], 0))
+        .then(() => Utils.checkNumberMethod(tokenLocker, "getPromiseCount", [0, TRUE], 1))
         .then(() => Utils.checkMethod(tokenLocker, "isConfirmed", [tx1], true))
 
         .then(() => lockTokensAndConfirm(tokenLocker, recipient2, amount2, currentTime + lockDuration2))
         .then(tx => tx2 = tx)
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false], 2))
+        .then(Utils.checkNumberMethod(tokenLocker, "getPromiseCount", [0, false], 2))
         .then(() => Utils.checkMethod(tokenLocker, "isConfirmed", [tx2], true))
 
         .then(Utils.checkNumberField(tokenLocker, "promisedTokenBalance", amount1 + amount2))
@@ -210,18 +216,25 @@ contract('SingleTokenLocker', function () {
         .then(() => tokenLocker.collect(tx2, {from: recipient2}))
         .then(Utils.checkNumberField(tokenLocker, "promisedTokenBalance", amount1))
         .then(Utils.checkNumberField(tokenLocker, "lockedTokenBalance", amount1))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false], 1))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, TRUE], 2))
+        .then(Utils.checkNumberMethod(tokenLocker, "getPromiseCount", [0, false], 1))
+        .then(Utils.checkNumberMethod(tokenLocker, "getPromiseCount", [0, TRUE], 2))
 
         .then(() => waitUntilTime(currentTime+lockDuration1, otherUser1))
         .then(() => tokenLocker.collect(tx1, {from: recipient1}))
         .then(Utils.checkNumberField(tokenLocker, "promisedTokenBalance", 0))
         .then(Utils.checkNumberField(tokenLocker, "lockedTokenBalance", 0))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false], 0))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, TRUE], 2))
+        .then(Utils.checkNumberMethod(tokenLocker, "getPromiseCount", [0, false], 0))
+        .then(Utils.checkNumberMethod(tokenLocker, "getPromiseCount", [0, TRUE], 2))
     });
   });
 });
+
+function assertPromiseCount(tokenLocker, recipient, includeCompleted, expected) {
+  return Promise.resolve()
+    .then(() => tokenLocker.getPromiseCount(recipient, includeCompleted))
+    .then((c) => tokenLocker.getPromiseIds(0, c, recipient, includeCompleted))
+    .then((results) => results.length, expected);
+}
 
 function assertTokenBalance(token, addr, amount) {
   return token.balanceOf(addr)

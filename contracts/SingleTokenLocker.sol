@@ -86,23 +86,35 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
   event logPromiseCanceled(uint256 promiseId);
   event logPromiseFulfilled(uint256 promiseId);
 
+  /**
+   * Guards actions that only the intended recipient should be able to perform
+   */
   modifier onlyRecipient(uint256 promiseId) {
     TokenPromise storage promise = promises[promiseId];
     require(promise.recipient == msg.sender);
     _;
   }
 
+  /**
+   * Ensures the promiseId as actually in use.
+   */
   modifier promiseExists(uint promiseId) {
-    TokenPromise storage promise = promises[promiseId];
-    require(promise.recipient != 0);
+    require(promiseId < nextPromiseId);
     _;
   }
 
+  /**
+   * Requires at least the specified number of tokens are held by this locker and are not already promised
+   * to any other recipients
+   */
   modifier hasUncommittedTokens(uint256 tokens) {
     require(tokens <= uncommittedTokenBalance());
     _;
   }
 
+  /**
+   * Ensure state consistency after modifying lockedTokenBalance or promisedTokenBalance
+   */
   modifier thenAssertState() {
     _;
     uint256 balance = tokenBalance();
@@ -189,6 +201,9 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     assert(promises[promiseId].state == PromiseState.confirmed);
   }
 
+  /***
+   * Withdraws the given number of tokens from the locker as long as they are not already locked or promised
+   */
   function withdrawUncommittedTokens(uint _amount)
     onlyOwner
     requires(_amount <= uncommittedTokenBalance())
@@ -198,6 +213,9 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     token.transfer(owner, _amount);
   }
 
+  /***
+   * Withdraw all tokens from the wallet that are not locked or promised
+   */
   function withdrawAllUncommittedTokens()
     onlyOwner
     noReentrancy
@@ -225,6 +243,9 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
       IERC20Token(_tokenAddress).transfer(_to, _amount);
   }
 
+  /***
+   * Returns true if the give promise has been confirmed by the recipient
+   */
   function isConfirmed(uint256 promiseId)
     constant
     returns(bool)
@@ -232,8 +253,14 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     return promises[promiseId].state == PromiseState.confirmed;
   }
 
-  // Returns total number of transactions after filers are applied.
-  function getTransactionCount(address recipient, bool includeCompleted)
+  /***
+   * Return the number of transactions that meet the given criteria.  To be used in conjunction with
+   * getPromiseIds()
+   *
+   * recipient: the recipients address to use for filtering, or 0x0 to return all
+   * includeCompleted: true if the list should include transactions that are already executed or canceled
+   */
+  function getPromiseCount(address recipient, bool includeCompleted)
     public
     constant
     returns (uint count)
@@ -249,7 +276,12 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     }
   }
 
-  // Returns list of transaction IDs in defined range.
+  /***
+   * Return a list of promiseIds that match the given criteria
+   *
+   * recipient: the recipients address to use for filtering, or 0x0 to return all
+   * includeCompleted: true if the list should include transactions that are already executed or canceled
+   */
   function getPromiseIds(uint from, uint to, address recipient, bool includeCompleted)
     public
     constant
@@ -276,6 +308,9 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
       _promiseIds[i - from] = promiseIdsTemp[i];
   }
 
+  /***
+   * returns the number of tokens held by the token locker (some might be promised or locked)
+   */
   function tokenBalance()
     constant
     returns(uint256)
@@ -283,6 +318,9 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     return token.balanceOf(address(this));
   }
 
+  /***
+   * returns the number of tokens that are not promised or locked
+   */
   function uncommittedTokenBalance()
     constant
     returns(uint256)
@@ -290,6 +328,9 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     return tokenBalance() - promisedTokenBalance;
   }
 
+  /***
+   * returns the number of tokens that a promised by have not been locked (pending confirmation from recipient)
+   */
   function pendingTokenBalance()
     constant
     returns(uint256)
@@ -307,7 +348,9 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     logPromiseConfirmed(promise.promiseId);
   }
 
-  // creates and stores a new promise object, updated the totalLockedTokens amount
+  /***
+   * creates and stores a new promise object, updated the totalLockedTokens amount
+   */
   function createPromise(address recipient, uint256 amount, uint256 lockedUntil)
     hasUncommittedTokens(amount)
     thenAssertState
