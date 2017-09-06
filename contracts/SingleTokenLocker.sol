@@ -135,6 +135,7 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
    *
    * Note 1: lockup is not guaranteed until the recipient confirms.
    * Note 2: Assumes the owner has already given approval for the TokenLocker to take out the tokens
+   *         or that the locker's balance is sufficient
    */
   function lockup(address recipient, uint256 amount, uint256 lockedUntil)
     onlyOwner
