@@ -20,7 +20,8 @@ import "./Utils/StandardContract.sol";
  *
  * Usage:
  *  - The owner creates a token locker for a particular ERC20 token type
- *  - The owner transfers tokens to the locker.  These tokens will not be locked and can be removed at any time
+ *  - The owner approves the locker up to some number of tokens: token.approve(tokenLockerAddress, tokenAmount)
+ *    - Alternately, the owner can send tokens to the locker.  When locking tokens, the locker checks its balance first
  *  - The owner calls "lockup" with a particular recipient, amount, and unlock time.  The recipient will be allowed
  *    to collect the tokens once the lockup period is ended.
  *  - The recipient calls "confirm" which confirms that the recipient's address is correct and is controlled by the
@@ -232,7 +233,7 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
   }
 
   // Returns total number of transactions after filers are applied.
-  function getTransactionCount(address recipient, bool pending, bool confirmed, bool executed)
+  function getTransactionCount(address recipient, bool includeCompleted)
     public
     constant
     returns (uint count)
@@ -241,15 +242,15 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
       if (recipient != 0x0 && recipient != promises[i].recipient)
         continue;
 
-      if (   pending && promises[i].state == PromiseState.pending
-          || confirmed && promises[i].state == PromiseState.confirmed
-          || executed && promises[i].state == PromiseState.executed)
+        if (includeCompleted
+            || promises[i].state == PromiseState.pending
+            || promises[i].state == PromiseState.confirmed)
       count += 1;
     }
   }
 
   // Returns list of transaction IDs in defined range.
-  function getPromiseIds(uint from, uint to, address recipient, bool pending, bool confirmed, bool executed)
+  function getPromiseIds(uint from, uint to, address recipient, bool includeCompleted)
     public
     constant
     returns (uint[] _promiseIds)
@@ -262,9 +263,9 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
       if (recipient != 0x0 && recipient != promises[i].recipient)
         continue;
 
-      if (   pending && promises[i].state == PromiseState.pending
-          || executed && promises[i].state == PromiseState.executed
-          || confirmed && promises[i].state == PromiseState.confirmed)
+      if (includeCompleted
+        || promises[i].state == PromiseState.pending
+        || promises[i].state == PromiseState.confirmed)
       {
         promiseIdsTemp[count] = i;
         count += 1;
@@ -371,6 +372,9 @@ contract SingleTokenLocker is Owned, ReentrancyHandler, StandardContract {
     uint256 uncommittedBalance = uncommittedTokenBalance();
     if (uncommittedBalance < amount) {
       token.transferFrom(owner, this, amount.sub(uncommittedBalance));
+
+      // Just assert that the condition we really care about holds, rather
+      // than relying on the return value.
       assert(uncommittedTokenBalance() >= amount);
     }
   }

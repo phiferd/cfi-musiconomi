@@ -59,10 +59,11 @@ contract('SingleTokenLocker', function () {
         .then(() => lockTokens(tokenLocker, recipient2, 3, currentTime+7))
         .then(() => lockTokensAndConfirm(tokenLocker, recipient2, 4, currentTime+8))
 
-        .then(() => tokenLocker.getTransactionCount(recipient1, true, true, true))
-        .then((c) => tokenLocker.getPromiseIds(0, c, recipient1, true, true, true))
-        .then(() => tokenLocker.getTransactionCount(recipient2, true, true, true))
-        .then((c) => tokenLocker.getPromiseIds(0, c, recipient2, true, true, true))
+        .then(() => tokenLocker.getTransactionCount(recipient1, true))
+        .then((c) => tokenLocker.getPromiseIds(0, c, recipient1, true))
+        .then((results) => assert.equals(results.length, 3))
+        .then(() => tokenLocker.getTransactionCount(recipient2, true))
+        .then((c) => tokenLocker.getPromiseIds(0, c, recipient2, true))
     });
 
     it("can't lockup more than it its allowance", () => {
@@ -100,6 +101,8 @@ contract('SingleTokenLocker', function () {
         .then(tx => {
           return Promise.resolve()
             .then(() => tokenLocker.cancel(tx, {from: lockerOwner}))
+            .then(Utils.checkNumberField(tokenLocker, "tokenBalance", amount))
+
             .then(() => tokenLocker.withdrawAllUncommittedTokens({from: lockerOwner}))
             .then(Utils.checkNumberField(tokenLocker, "tokenBalance", 0))
         })
@@ -189,16 +192,16 @@ contract('SingleTokenLocker', function () {
 
         .then(() => lockTokens(tokenLocker, recipient1, amount1, currentTime + lockDuration1))
         .then(tx => tx1 = tx)
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, TRUE, false, false], 1))
+        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false], 1))
         .then(() => tokenLocker.confirm(tx1, {from: recipient1}))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, TRUE, false, false], 0))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false, TRUE, false], 1))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [recipient1, false, TRUE, false], 1))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [recipient2, false, TRUE, false], 0))
+        .then(() => Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false], 0))
+        .then(() => Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, TRUE], 1))
+        .then(() => Utils.checkMethod(tokenLocker, "isConfirmed", [tx1], true))
 
         .then(() => lockTokensAndConfirm(tokenLocker, recipient2, amount2, currentTime + lockDuration2))
         .then(tx => tx2 = tx)
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false, TRUE, false], 2))
+        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false], 2))
+        .then(() => Utils.checkMethod(tokenLocker, "isConfirmed", [tx2], true))
 
         .then(Utils.checkNumberField(tokenLocker, "promisedTokenBalance", amount1 + amount2))
         .then(Utils.checkNumberField(tokenLocker, "lockedTokenBalance", amount1 + amount2))
@@ -207,17 +210,15 @@ contract('SingleTokenLocker', function () {
         .then(() => tokenLocker.collect(tx2, {from: recipient2}))
         .then(Utils.checkNumberField(tokenLocker, "promisedTokenBalance", amount1))
         .then(Utils.checkNumberField(tokenLocker, "lockedTokenBalance", amount1))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false, TRUE, false], 1))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false, false, TRUE], 1))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false, TRUE, TRUE], 2))
+        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false], 1))
+        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, TRUE], 2))
 
         .then(() => waitUntilTime(currentTime+lockDuration1, otherUser1))
         .then(() => tokenLocker.collect(tx1, {from: recipient1}))
         .then(Utils.checkNumberField(tokenLocker, "promisedTokenBalance", 0))
         .then(Utils.checkNumberField(tokenLocker, "lockedTokenBalance", 0))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false, TRUE, false], 0))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false, false, TRUE], 2))
-        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false, TRUE, TRUE], 2))
+        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, false], 0))
+        .then(Utils.checkNumberMethod(tokenLocker, "getTransactionCount", [0, TRUE], 2))
     });
   });
 });
